@@ -7,13 +7,24 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f4f4f9; padding: 10px; }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #333; color: white; border-radius: 8px; margin-bottom: 10px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #333; color: white; border-radius: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+    .timer-section { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .timer { font-weight: bold; font-size: 1.1rem; }
-    .btn { padding: 6px 12px; margin-left: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn { padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    .btn-submit { background: #28a745; font-weight: bold; }
     .container { display: flex; flex: 1; gap: 10px; }
     .box { flex: 1; display: flex; flex-direction: column; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .box h3 { margin-bottom: 8px; color: #333; }
-    textarea { flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 1rem; resize: none; outline: none; }
+    textarea { flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 1rem; resize: none; outline: none; text-align: justify; text-justify: inter-word; line-height: 1.5; }
+    
+    /* Results Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; padding: 15px; }
+    .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; }
+    .modal-content h2 { margin-bottom: 15px; color: #333; }
+    .stat-box { margin-bottom: 10px; font-size: 1rem; line-height: 1.4; }
+    .error-list { background: #fff3f3; border: 1px solid #ffcdd2; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.9rem; max-height: 150px; overflow-y: auto; }
+    .close-btn { margin-top: 15px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; float: right; }
+    
     @media (max-width: 600px) { .container { flex-direction: column; } }
   </style>
 </head>
@@ -21,10 +32,11 @@
 
   <header>
     <h2>Typing Practice</h2>
-    <div>
+    <div class="timer-section">
       <span class="timer">Time Left: <span id="time">10:00</span></span>
       <button class="btn" onclick="setTime(10)">10 Min</button>
       <button class="btn" onclick="setTime(15)">15 Min</button>
+      <button class="btn btn-submit" onclick="finishTest()">Submit Test</button>
     </div>
   </header>
 
@@ -40,10 +52,21 @@
     </div>
   </div>
 
+  <!-- Results Modal -->
+  <div class="modal" id="resultModal">
+    <div class="modal-content">
+      <h2>Test Results</h2>
+      <div class="stat-box" id="stats"></div>
+      <div class="error-list" id="errorDetails"></div>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
   <script>
     let timerDisplay = document.getElementById('time');
     let totalSeconds = 600;
     let timerInterval = null;
+    let isRunning = false;
 
     function updateDisplay() {
       let mins = Math.floor(totalSeconds / 60);
@@ -55,17 +78,93 @@
       clearInterval(timerInterval);
       totalSeconds = minutes * 60;
       updateDisplay();
+      isRunning = true;
       timerInterval = setInterval(() => {
         if (totalSeconds > 0) {
           totalSeconds--;
           updateDisplay();
         } else {
           clearInterval(timerInterval);
-          alert('Time is up!');
+          finishTest();
         }
       }, 1000);
+    }
+
+    function finishTest() {
+      clearInterval(timerInterval);
+      isRunning = false;
+
+      let refText = document.getElementById('reference').value.trim();
+      let userText = document.getElementById('workspace').value.trim();
+
+      if (!refText) {
+        alert("Please enter a reference passage first!");
+        return;
+      }
+
+      let refWords = refText.split(/\s+/);
+      let userWords = userText ? userText.split(/\s+/) : [];
+
+      let correctCount = 0;
+      let misspelled = [];
+      let omitted = [];
+
+      refWords.forEach((refWord, index) => {
+        if (index < userWords.length) {
+          if (refWord === userWords[index]) {
+            correctCount++;
+          } else {
+            misspelled.push({ position: index + 1, expected: refWord, typed: userWords[index] });
+          }
+        } else {
+          omitted.push({ position: index + 1, word: refWord });
+        }
+      });
+
+      let extraWords = userWords.length > refWords.length ? userWords.length - refWords.length : 0;
+      let accuracy = refWords.length > 0 ? ((correctCount / refWords.length) * 100).toFixed(2) : 0;
+
+      let statsHTML = `
+        <p><strong>Total Reference Words:</strong> ${refWords.length}</p>
+        <p><strong>Total Words Typed:</strong> ${userWords.length}</p>
+        <p><strong>Correct Words:</strong> ${correctCount}</p>
+        <p><strong>Accuracy:</strong> ${accuracy}%</p>
+      `;
+
+      let errorsHTML = "<strong>Error Breakdown:</strong><br>";
+      
+      if (misspelled.length > 0) {
+        errorsHTML += "<br><em>Misspelled/Incorrect Words:</em><br>";
+        misspelled.forEach(e => {
+          errorsHTML += `• Word ${e.position}: Expected "<strong>${e.expected}</strong>", but typed "<strong>${e.typed}</strong>"<br>`;
+        });
+      }
+
+      if (omitted.length > 0) {
+        errorsHTML += "<br><em>Omitted (Missing) Words:</em><br>";
+        omitted.forEach(e => {
+          errorsHTML += `• Word ${e.position}: "<strong>${e.word}</strong>"<br>`;
+        });
+      }
+
+      if (extraWords > 0) {
+        errorsHTML += `<br><em>Extra Words Typed:</em> ${extraWords}<br>`;
+      }
+
+      if (misspelled.length === 0 && omitted.length === 0 && extraWords === 0) {
+        errorsHTML += "<br>🎉 Perfect! No errors detected.";
+      }
+
+      document.getElementById('stats').innerHTML = statsHTML;
+      document.getElementById('errorDetails').innerHTML = errorsHTML;
+      document.getElementById('resultModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('resultModal').style.display = 'none';
     }
   </script>
 
 </body>
 </html>
+
