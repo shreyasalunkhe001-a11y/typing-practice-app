@@ -3,86 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Typing Practice App</title>
+  <title>Bombay High Court Clerk Typing Practice</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f4f4f9; padding: 10px; }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #333; color: white; border-radius: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
-    .timer-section { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .timer { font-weight: bold; font-size: 1.1rem; }
-    .btn { padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-    .btn-submit { background: #28a745; font-weight: bold; }
-    .container { display: flex; flex: 1; gap: 10px; }
-    .box { flex: 1; display: flex; flex-direction: column; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .box h3 { margin-bottom: 8px; color: #333; }
-    textarea { flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 1rem; resize: none; outline: none; text-align: justify; text-justify: inter-word; line-height: 1.5; }
+    body { font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #eef2f5; }
     
-    /* Results Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; padding: 15px; }
-    .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; }
-    .modal-content h2 { margin-bottom: 15px; color: #333; }
-    .stat-box { margin-bottom: 10px; font-size: 1rem; line-height: 1.4; }
-    .error-list { background: #fff3f3; border: 1px solid #ffcdd2; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.9rem; max-height: 150px; overflow-y: auto; }
-    .close-btn { margin-top: 15px; background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; float: right; }
+    .top-bar { background: #1a5b8c; color: white; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+    .top-bar h1 { font-size: 1.1rem; }
+    .sub-bar { background: #3b82f6; color: white; padding: 5px 15px; font-size: 0.85rem; font-weight: bold; }
     
-    @media (max-width: 600px) { .container { flex-direction: column; } }
+    .main-container { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
+    .box { flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #aaa; border-radius: 4px; padding: 10px; }
+    
+    /* Styled Editor Area with Paragraph Support */
+    textarea { 
+      flex: 1; 
+      width: 100%; 
+      border: 1px solid #ccc; 
+      border-radius: 2px; 
+      padding: 12px; 
+      font-size: 1rem; 
+      font-family: 'Times New Roman', Times, serif; 
+      line-height: 1.6; 
+      resize: none; 
+      outline: none; 
+      text-align: justify; 
+      white-space: pre-wrap; 
+      word-wrap: break-word; 
+    }
+    
+    .footer-bar { background: #d9e2ec; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
+    .btn { padding: 6px 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
+    .btn-cancel { background: #dc3545; }
+    .btn-submit { background: #0066cc; }
+    
+    /* Results View Matching Target Interface */
+    .results-screen { display: none; flex-direction: column; padding: 15px; flex: 1; overflow-y: auto; background: #f8f9fa; }
+    .results-container { display: flex; gap: 15px; margin-top: 15px; }
+    .result-card { flex: 1; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card-header-user { background: #8062e1; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 1rem; }
+    .card-header-orig { background: #318ce7; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 1rem; }
+    
+    .card-body { 
+      padding: 15px; 
+      font-family: 'Times New Roman', Times, serif; 
+      font-size: 1rem; 
+      line-height: 1.9; 
+      text-align: justify; 
+      white-space: pre-wrap; 
+    }
+
+    /* Word Highlight Badges */
+    .correct { background-color: #d1ecf1; color: #0c5460; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
+    .wrong { background-color: #f8d7da; color: #721c24; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
+    .case-err { background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
+    
+    @media (max-width: 600px) {
+      .main-container, .results-container { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <h2>Typing Practice</h2>
-    <div class="timer-section">
-      <span class="timer">Time Left: <span id="time">10:00</span></span>
-      <button class="btn" onclick="setTime(10)">10 Min</button>
-      <button class="btn" onclick="setTime(15)">15 Min</button>
-      <button class="btn btn-submit" onclick="finishTest()">Submit Test</button>
-    </div>
-  </header>
+  <div class="top-bar">
+    <h1>Bombay High Court Clerk Typing</h1>
+    <div>Time Left: <strong id="time">10:00</strong></div>
+  </div>
+  <div class="sub-bar">Section A | Keyboard Layout: QWERTY</div>
 
-  <div class="container">
+  <div class="main-container" id="practiceView">
     <div class="box">
-      <h3>Reference Passage</h3>
-      <textarea id="reference" placeholder="Paste or type your reference text here..."></textarea>
+      <textarea id="reference" placeholder="Paste original passage here (paragraph indents and spaces will be preserved)..."></textarea>
     </div>
-    
     <div class="box">
-      <h3>Your Workspace</h3>
-      <textarea id="workspace" placeholder="Start typing here to practice..."></textarea>
+      <textarea id="workspace" placeholder="Start typing here..."></textarea>
     </div>
   </div>
 
-  <!-- Results Modal -->
-  <div class="modal" id="resultModal">
-    <div class="modal-content">
-      <h2>Test Results</h2>
-      <div class="stat-box" id="stats"></div>
-      <div class="error-list" id="errorDetails"></div>
-      <button class="close-btn" onclick="closeModal()">Close</button>
+  <div class="footer-bar" id="footerBar">
+    <button class="btn btn-cancel" onclick="resetTest()">Cancel</button>
+    <div>
+      <button class="btn btn-submit" style="background:#28a745;" onclick="startTimer(10)">Start 10M</button>
+      <button class="btn btn-submit" onclick="finishTest()">Submit</button>
     </div>
+  </div>
+
+  <div class="results-screen" id="resultsView">
+    <h2>Typing Performance Evaluation</h2>
+    <div class="results-container">
+      
+      <div class="result-card">
+        <div class="card-header-user">Your Typed Paragraph</div>
+        <div class="card-body" id="userResultBody"></div>
+      </div>
+
+      <div class="result-card">
+        <div class="card-header-orig">Original Paragraph</div>
+        <div class="card-body" id="origResultBody"></div>
+      </div>
+
+    </div>
+    <button class="btn btn-submit" style="margin-top:15px; align-self: flex-start;" onclick="goBack()">Back to Test</button>
   </div>
 
   <script>
-    let timerDisplay = document.getElementById('time');
     let totalSeconds = 600;
     let timerInterval = null;
-    let isRunning = false;
 
-    function updateDisplay() {
-      let mins = Math.floor(totalSeconds / 60);
-      let secs = totalSeconds % 60;
-      timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
+    // Preserve Tab keys inside textarea as indents
+    document.querySelectorAll('textarea').forEach(textarea => {
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          let start = this.selectionStart;
+          let end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 1;
+        }
+      });
+    });
 
-    function setTime(minutes) {
+    function startTimer(mins) {
       clearInterval(timerInterval);
-      totalSeconds = minutes * 60;
-      updateDisplay();
-      isRunning = true;
+      totalSeconds = mins * 60;
       timerInterval = setInterval(() => {
         if (totalSeconds > 0) {
           totalSeconds--;
-          updateDisplay();
+          let m = Math.floor(totalSeconds / 60);
+          let s = totalSeconds % 60;
+          document.getElementById('time').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         } else {
           clearInterval(timerInterval);
           finishTest();
@@ -90,81 +139,74 @@
       }, 1000);
     }
 
+    function renderTokens(text, referenceTokens = null) {
+      // Split text into tokens keeping spaces and line breaks intact
+      let tokens = text.split(/(\s+)/);
+      return tokens;
+    }
+
     function finishTest() {
       clearInterval(timerInterval);
-      isRunning = false;
+      
+      let refText = document.getElementById('reference').value;
+      let userText = document.getElementById('workspace').value;
 
-      let refText = document.getElementById('reference').value.trim();
-      let userText = document.getElementById('workspace').value.trim();
-
-      if (!refText) {
-        alert("Please enter a reference passage first!");
+      if (!refText.trim()) {
+        alert("Please paste a reference passage on the left first!");
         return;
       }
 
-      let refWords = refText.split(/\s+/);
-      let userWords = userText ? userText.split(/\s+/) : [];
+      let refTokens = renderTokens(refText);
+      let userTokens = renderTokens(userText);
 
-      let correctCount = 0;
-      let misspelled = [];
-      let omitted = [];
+      let userHTML = "";
+      let origHTML = "";
 
-      refWords.forEach((refWord, index) => {
-        if (index < userWords.length) {
-          if (refWord === userWords[index]) {
-            correctCount++;
-          } else {
-            misspelled.push({ position: index + 1, expected: refWord, typed: userWords[index] });
-          }
-        } else {
-          omitted.push({ position: index + 1, word: refWord });
+      let maxLen = Math.max(refTokens.length, userTokens.length);
+
+      for (let i = 0; i < maxLen; i++) {
+        let rToken = refTokens[i] || "";
+        let uToken = userTokens[i] || "";
+
+        // Preserve spaces and line breaks directly
+        if (/^\s+$/.test(rToken) || /^\s+$/.test(uToken)) {
+          origHTML += rToken;
+          userHTML += uToken;
+          continue;
         }
-      });
 
-      let extraWords = userWords.length > refWords.length ? userWords.length - refWords.length : 0;
-      let accuracy = refWords.length > 0 ? ((correctCount / refWords.length) * 100).toFixed(2) : 0;
-
-      let statsHTML = `
-        <p><strong>Total Reference Words:</strong> ${refWords.length}</p>
-        <p><strong>Total Words Typed:</strong> ${userWords.length}</p>
-        <p><strong>Correct Words:</strong> ${correctCount}</p>
-        <p><strong>Accuracy:</strong> ${accuracy}%</p>
-      `;
-
-      let errorsHTML = "<strong>Error Breakdown:</strong><br>";
-      
-      if (misspelled.length > 0) {
-        errorsHTML += "<br><em>Misspelled/Incorrect Words:</em><br>";
-        misspelled.forEach(e => {
-          errorsHTML += `• Word ${e.position}: Expected "<strong>${e.expected}</strong>", but typed "<strong>${e.typed}</strong>"<br>`;
-        });
+        if (rToken === uToken && rToken !== "") {
+          origHTML += `<span class="correct">${rToken}</span>`;
+          userHTML += `<span class="correct">${uToken}</span>`;
+        } else if (rToken.toLowerCase() === uToken.toLowerCase() && rToken !== "") {
+          origHTML += `<span class="case-err">${rToken}</span>`;
+          userHTML += `<span class="case-err">${uToken}</span>`;
+        } else {
+          if (rToken) origHTML += `<span class="wrong">${rToken}</span>`;
+          if (uToken) userHTML += `<span class="wrong">${uToken}</span>`;
+        }
       }
 
-      if (omitted.length > 0) {
-        errorsHTML += "<br><em>Omitted (Missing) Words:</em><br>";
-        omitted.forEach(e => {
-          errorsHTML += `• Word ${e.position}: "<strong>${e.word}</strong>"<br>`;
-        });
-      }
+      document.getElementById('userResultBody').innerHTML = userHTML;
+      document.getElementById('origResultBody').innerHTML = origHTML;
 
-      if (extraWords > 0) {
-        errorsHTML += `<br><em>Extra Words Typed:</em> ${extraWords}<br>`;
-      }
-
-      if (misspelled.length === 0 && omitted.length === 0 && extraWords === 0) {
-        errorsHTML += "<br>🎉 Perfect! No errors detected.";
-      }
-
-      document.getElementById('stats').innerHTML = statsHTML;
-      document.getElementById('errorDetails').innerHTML = errorsHTML;
-      document.getElementById('resultModal').style.display = 'flex';
+      document.getElementById('practiceView').style.display = 'none';
+      document.getElementById('footerBar').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'flex';
     }
 
-    function closeModal() {
-      document.getElementById('resultModal').style.display = 'none';
+    function goBack() {
+      document.getElementById('practiceView').style.display = 'flex';
+      document.getElementById('footerBar').style.display = 'flex';
+      document.getElementById('resultsView').style.display = 'none';
+    }
+
+    function resetTest() {
+      clearInterval(timerInterval);
+      document.getElementById('workspace').value = '';
+      document.getElementById('time').textContent = '10:00';
     }
   </script>
-
 </body>
 </html>
 
