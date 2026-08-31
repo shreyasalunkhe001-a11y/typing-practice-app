@@ -15,7 +15,6 @@
     .main-container { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
     .box { flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #aaa; border-radius: 4px; padding: 8px; }
     
-    /* Continuous Flow Textarea Settings */
     textarea { 
       flex: 1; 
       width: 100%; 
@@ -24,13 +23,12 @@
       padding: 12px; 
       font-size: 1.05rem; 
       font-family: 'Times New Roman', Times, serif; 
-      line-height: 1.5; 
+      line-height: 1.6; 
       resize: none; 
       outline: none; 
       text-align: justify; 
-      text-justify: inter-word;
       white-space: pre-wrap; 
-      word-break: normal;
+      word-wrap: break-word;
       overflow-y: auto;
     }
     
@@ -39,7 +37,6 @@
     .btn-cancel { background: #dc3545; }
     .btn-submit { background: #0066cc; }
     
-    /* Results View */
     .results-screen { display: none; flex-direction: column; padding: 15px; flex: 1; overflow-y: auto; background: #f8f9fa; }
     .results-container { display: flex; gap: 15px; margin-top: 15px; }
     .result-card { flex: 1; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -55,7 +52,6 @@
       white-space: pre-wrap; 
     }
 
-    /* Word Highlight Badges */
     .correct { background-color: #d1ecf1; color: #0c5460; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
     .wrong { background-color: #f8d7da; color: #721c24; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
     .case-err { background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
@@ -75,7 +71,7 @@
 
   <div class="main-container" id="practiceView">
     <div class="box">
-      <textarea id="reference" placeholder="Paste original passage here..."></textarea>
+      <textarea id="reference" placeholder="Paste passage here... (PDF line breaks will auto-clean into continuous paragraphs)"></textarea>
     </div>
     <div class="box">
       <textarea id="workspace" placeholder="Start typing continuous text here..."></textarea>
@@ -111,6 +107,23 @@
   <script>
     let totalSeconds = 600;
     let timerInterval = null;
+
+    // Auto-clean PDF hard line breaks when pasting
+    document.getElementById('reference').addEventListener('paste', function(e) {
+      e.preventDefault();
+      let text = (e.clipboardData || window.clipboardData).getData('text');
+      
+      // Replace single line breaks with spaces, retain double breaks for real paragraphs
+      let cleanedText = text
+        .replace(/\r\n/g, '\n')
+        .replace(/([^\n])\n([^\n])/g, '$1 $2')
+        .replace(/[ \t]+/g, ' ');
+
+      let start = this.selectionStart;
+      let end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + cleanedText + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + cleanedText.length;
+    });
 
     function startTimer(mins) {
       clearInterval(timerInterval);
