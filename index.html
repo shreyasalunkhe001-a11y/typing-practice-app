@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> Typing Practice</title>
+  <title>Typing Practice</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #eef2f5; }
@@ -13,23 +13,25 @@
     .sub-bar { background: #3b82f6; color: white; padding: 5px 15px; font-size: 0.85rem; font-weight: bold; }
     
     .main-container { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
-    .box { flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #aaa; border-radius: 4px; padding: 10px; }
+    .box { flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #aaa; border-radius: 4px; padding: 8px; }
     
-    /* Styled Editor Area with Paragraph Support */
+    /* Continuous Flow Textarea Settings */
     textarea { 
       flex: 1; 
       width: 100%; 
       border: 1px solid #ccc; 
       border-radius: 2px; 
       padding: 12px; 
-      font-size: 1rem; 
+      font-size: 1.05rem; 
       font-family: 'Times New Roman', Times, serif; 
-      line-height: 1.6; 
+      line-height: 1.5; 
       resize: none; 
       outline: none; 
       text-align: justify; 
+      text-justify: inter-word;
       white-space: pre-wrap; 
-      word-wrap: break-word; 
+      word-break: normal;
+      overflow-y: auto;
     }
     
     .footer-bar { background: #d9e2ec; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
@@ -37,7 +39,7 @@
     .btn-cancel { background: #dc3545; }
     .btn-submit { background: #0066cc; }
     
-    /* Results View Matching Target Interface */
+    /* Results View */
     .results-screen { display: none; flex-direction: column; padding: 15px; flex: 1; overflow-y: auto; background: #f8f9fa; }
     .results-container { display: flex; gap: 15px; margin-top: 15px; }
     .result-card { flex: 1; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -47,16 +49,16 @@
     .card-body { 
       padding: 15px; 
       font-family: 'Times New Roman', Times, serif; 
-      font-size: 1rem; 
-      line-height: 1.9; 
+      font-size: 1.05rem; 
+      line-height: 1.8; 
       text-align: justify; 
       white-space: pre-wrap; 
     }
 
     /* Word Highlight Badges */
-    .correct { background-color: #d1ecf1; color: #0c5460; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
-    .wrong { background-color: #f8d7da; color: #721c24; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
-    .case-err { background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px 1px; }
+    .correct { background-color: #d1ecf1; color: #0c5460; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
+    .wrong { background-color: #f8d7da; color: #721c24; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
+    .case-err { background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
     
     @media (max-width: 600px) {
       .main-container, .results-container { flex-direction: column; }
@@ -66,17 +68,17 @@
 <body>
 
   <div class="top-bar">
-    <h1>Bombay High Court Clerk Typing</h1>
+    <h1>Typing Practice</h1>
     <div>Time Left: <strong id="time">10:00</strong></div>
   </div>
   <div class="sub-bar">Section A | Keyboard Layout: QWERTY</div>
 
   <div class="main-container" id="practiceView">
     <div class="box">
-      <textarea id="reference" placeholder="Paste original passage here (paragraph indents and spaces will be preserved)..."></textarea>
+      <textarea id="reference" placeholder="Paste original passage here..."></textarea>
     </div>
     <div class="box">
-      <textarea id="workspace" placeholder="Start typing here..."></textarea>
+      <textarea id="workspace" placeholder="Start typing continuous text here..."></textarea>
     </div>
   </div>
 
@@ -110,19 +112,6 @@
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Preserve Tab keys inside textarea as indents
-    document.querySelectorAll('textarea').forEach(textarea => {
-      textarea.addEventListener('keydown', function(e) {
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          let start = this.selectionStart;
-          let end = this.selectionEnd;
-          this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
-          this.selectionStart = this.selectionEnd = start + 1;
-        }
-      });
-    });
-
     function startTimer(mins) {
       clearInterval(timerInterval);
       totalSeconds = mins * 60;
@@ -139,10 +128,8 @@
       }, 1000);
     }
 
-    function renderTokens(text, referenceTokens = null) {
-      // Split text into tokens keeping spaces and line breaks intact
-      let tokens = text.split(/(\s+)/);
-      return tokens;
+    function renderTokens(text) {
+      return text.split(/(\s+)/);
     }
 
     function finishTest() {
@@ -168,7 +155,6 @@
         let rToken = refTokens[i] || "";
         let uToken = userTokens[i] || "";
 
-        // Preserve spaces and line breaks directly
         if (/^\s+$/.test(rToken) || /^\s+$/.test(uToken)) {
           origHTML += rToken;
           userHTML += uToken;
@@ -209,4 +195,3 @@
   </script>
 </body>
 </html>
-
