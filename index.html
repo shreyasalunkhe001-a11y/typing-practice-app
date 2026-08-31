@@ -10,7 +10,7 @@
     
     .top-bar { background: #1a5b8c; color: white; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
     .top-bar h1 { font-size: 1.1rem; }
-    .sub-bar { background: #3b82f6; color: white; padding: 5px 15px; font-size: 0.85rem; font-weight: bold; }
+    .sub-bar { background: #3b82f6; color: white; padding: 5px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; }
     
     .main-container { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; }
     .box { flex: 1; display: flex; flex-direction: column; background: white; border: 1px solid #aaa; border-radius: 4px; padding: 8px; }
@@ -33,9 +33,10 @@
     }
     
     .footer-bar { background: #d9e2ec; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
-    .btn { padding: 6px 16px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
+    .btn { padding: 6px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; }
     .btn-cancel { background: #dc3545; }
     .btn-submit { background: #0066cc; }
+    .btn-clean { background: #17a2b8; margin-left: 5px; }
     
     .results-screen { display: none; flex-direction: column; padding: 15px; flex: 1; overflow-y: auto; background: #f8f9fa; }
     .results-container { display: flex; gap: 15px; margin-top: 15px; }
@@ -67,11 +68,14 @@
     <h1>Typing Practice</h1>
     <div>Time Left: <strong id="time">10:00</strong></div>
   </div>
-  <div class="sub-bar">Section A | Keyboard Layout: QWERTY</div>
+  <div class="sub-bar">
+    <span>Section A | Keyboard Layout: QWERTY</span>
+    <button class="btn btn-clean" onclick="cleanPassage()">Fix PDF Breaks 🪄</button>
+  </div>
 
   <div class="main-container" id="practiceView">
     <div class="box">
-      <textarea id="reference" placeholder="Paste passage here... (PDF line breaks will auto-clean into continuous paragraphs)"></textarea>
+      <textarea id="reference" placeholder="Paste passage here, then tap 'Fix PDF Breaks' above..."></textarea>
     </div>
     <div class="box">
       <textarea id="workspace" placeholder="Start typing continuous text here..."></textarea>
@@ -108,22 +112,25 @@
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Auto-clean PDF hard line breaks when pasting
-    document.getElementById('reference').addEventListener('paste', function(e) {
-      e.preventDefault();
-      let text = (e.clipboardData || window.clipboardData).getData('text');
-      
-      // Replace single line breaks with spaces, retain double breaks for real paragraphs
+    // Manual cleaning function for mobile & Safari
+    function cleanPassage() {
+      let refInput = document.getElementById('reference');
+      let text = refInput.value;
+
+      if (!text.trim()) {
+        alert("Pehle text paste karlo left box me!");
+        return;
+      }
+
+      // Convert broken single lines into space, keep double enter for real paragraphs
       let cleanedText = text
         .replace(/\r\n/g, '\n')
         .replace(/([^\n])\n([^\n])/g, '$1 $2')
         .replace(/[ \t]+/g, ' ');
 
-      let start = this.selectionStart;
-      let end = this.selectionEnd;
-      this.value = this.value.substring(0, start) + cleanedText + this.value.substring(end);
-      this.selectionStart = this.selectionEnd = start + cleanedText.length;
-    });
+      refInput.value = cleanedText;
+      alert("Fixed! Lines are now continuous.");
+    }
 
     function startTimer(mins) {
       clearInterval(timerInterval);
