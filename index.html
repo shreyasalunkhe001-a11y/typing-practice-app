@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typing Practice App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f4f4f9; padding: 10px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #333; color: white; border-radius: 8px; margin-bottom: 10px; }
+    .timer { font-weight: bold; font-size: 1.1rem; }
+    .btn { padding: 6px 12px; margin-left: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .container { display: flex; flex: 1; gap: 10px; }
+    .box { flex: 1; display: flex; flex-direction: column; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .box h3 { margin-bottom: 8px; color: #333; }
+    textarea { flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 1rem; resize: none; outline: none; }
+    @media (max-width: 600px) { .container { flex-direction: column; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>Typing Practice</h2>
+    <div>
+      <span class="timer">Time Left: <span id="time">10:00</span></span>
+      <button class="btn" onclick="setTime(10)">10 Min</button>
+      <button class="btn" onclick="setTime(15)">15 Min</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="box">
+      <h3>Reference Passage</h3>
+      <textarea id="reference" placeholder="Paste or type your reference text here..."></textarea>
+    </div>
+    
+    <div class="box">
+      <h3>Your Workspace</h3>
+      <textarea id="workspace" placeholder="Start typing here to practice..."></textarea>
+    </div>
+  </div>
+
+  <script>
+    let timerDisplay = document.getElementById('time');
+    let totalSeconds = 600;
+    let timerInterval = null;
+
+    function updateDisplay() {
+      let mins = Math.floor(totalSeconds / 60);
+      let secs = totalSeconds % 60;
+      timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function setTime(minutes) {
+      clearInterval(timerInterval);
+      totalSeconds = minutes * 60;
+      updateDisplay();
+      timerInterval = setInterval(() => {
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          updateDisplay();
+        } else {
+          clearInterval(timerInterval);
+          alert('Time is up!');
+        }
+      }, 1000);
+    }
+  </script>
+
+</body>
+</html>
