@@ -78,11 +78,11 @@
 
     /* Practice Section */
     .practice-section { margin-top: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .practice-section h3 { margin-bottom: 12px; color: #1a5b8c; font-size: 1.1rem; border-bottom: 2px solid #eef2f5; padding-bottom: 6px; }
-    .practice-item { margin-bottom: 18px; border-left: 4px solid #318ce7; padding-left: 10px; }
-    .practice-word-header { font-weight: bold; font-size: 1.1rem; color: #000; margin-bottom: 6px; }
-    .practice-line { font-family: 'Times New Roman', Times, serif; color: #555; margin-bottom: 4px; }
-    .practice-input { width: 100%; padding: 6px 10px; font-family: 'Times New Roman', Times, serif; font-size: 0.95rem; border: 1px dashed #aaa; border-radius: 4px; margin-top: 2px; }
+    .practice-section h3 { margin-bottom: 15px; color: #1a5b8c; font-size: 1.1rem; border-bottom: 2px solid #eef2f5; padding-bottom: 6px; }
+    .practice-item { margin-bottom: 20px; border-left: 4px solid #318ce7; padding-left: 12px; }
+    .practice-word-header { font-weight: bold; font-size: 1.1rem; color: #000; margin-bottom: 8px; }
+    .blank-space-box { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .practice-input { width: 100%; padding: 8px 12px; font-family: 'Times New Roman', Times, serif; font-size: 1rem; border: 1px dashed #a0aec0; border-radius: 4px; background: #fafafa; }
 
     @media (max-width: 600px) {
       .main-container, .results-container { flex-direction: column; }
@@ -197,7 +197,7 @@
       }, 1000);
     }
 
-    // Longest Common Subsequence (LCS) Sequence Alignment Algorithm
+    // Longest Common Subsequence (LCS) Sequence Alignment
     function alignTokens(refTokens, userTokens) {
       const N = refTokens.length;
       const M = userTokens.length;
@@ -261,12 +261,24 @@
       let errorCount = 0;
       let omittedCount = 0;
 
-      let errorWordsToPractice = new Set();
+      let practiceItems = [];
+      let currentOmittedGroup = [];
+
+      function flushOmittedGroup() {
+        if (currentOmittedGroup.length > 0) {
+          let phrase = currentOmittedGroup.join(" ").trim();
+          if (phrase.length > 0) {
+            practiceItems.push(phrase);
+          }
+          currentOmittedGroup = [];
+        }
+      }
 
       for (let idx = 0; idx < alignment.length; idx++) {
         let item = alignment[idx];
 
         if (item.type === 'match') {
+          flushOmittedGroup();
           if (/^\s+$/.test(item.ref)) {
             origHTML += item.ref;
             userHTML += item.user;
@@ -277,21 +289,23 @@
             totalTyped++;
           }
         } else if (item.type === 'extra') {
+          flushOmittedGroup();
           if (/^\s+$/.test(item.user)) {
             userHTML += item.user;
           } else {
             userHTML += `<span class="wrong">${item.user}</span>`;
             errorCount++;
             totalTyped++;
-            errorWordsToPractice.add(item.user.replace(/[^\w]/g, ''));
+            practiceItems.push(item.user);
           }
         } else if (item.type === 'omit') {
           if (/^\s+$/.test(item.ref)) {
             origHTML += item.ref;
           } else {
-            // Check if this omission is paired next to an extra insertion (Substitute / Misspelled Word)
             let nextItem = alignment[idx + 1];
+            // Misspelled Word (Substitute)
             if (nextItem && nextItem.type === 'extra' && !/^\s+$/.test(nextItem.user)) {
+              flushOmittedGroup();
               if (item.ref.toLowerCase() === nextItem.user.toLowerCase()) {
                 origHTML += `<span class="case-err">${item.ref}</span>`;
                 userHTML += `<span class="case-err">${nextItem.user}</span>`;
@@ -301,18 +315,21 @@
               }
               errorCount++;
               totalTyped++;
-              errorWordsToPractice.add(item.ref.replace(/[^\w]/g, ''));
-              idx++; // Skip next item since handled
+              practiceItems.push(item.ref);
+              idx++; // Skip extra token since handled
             } else {
+              // Grouped Omission
               origHTML += `<span class="omitted">${item.ref}</span>`;
               omittedCount++;
-              errorWordsToPractice.add(item.ref.replace(/[^\w]/g, ''));
+              currentOmittedGroup.push(item.ref);
             }
           }
         }
       }
 
-      // Update Statistics
+      flushOmittedGroup();
+
+      // Stats Update
       document.getElementById('statTyped').textContent = totalTyped;
       document.getElementById('statCorrect').textContent = correctCount;
       document.getElementById('statErrors').textContent = errorCount;
@@ -321,23 +338,21 @@
       document.getElementById('userResultBody').innerHTML = userHTML;
       document.getElementById('origResultBody').innerHTML = origHTML;
 
-      // Generate Practice Section
+      // Render Practice Section
       let practiceList = document.getElementById('practiceList');
       practiceList.innerHTML = "";
 
-      let validPracticeWords = Array.from(errorWordsToPractice).filter(w => w.length > 0);
-
-      if (validPracticeWords.length > 0) {
+      if (practiceItems.length > 0) {
         document.getElementById('practiceSection').style.display = 'block';
-        validPracticeWords.forEach(word => {
-          let lineText = Array(6).fill(word).join(" ");
+        practiceItems.forEach(entry => {
           let itemHTML = `
             <div class="practice-item">
-              <div class="practice-word-header">${word}</div>
-              <div class="practice-line">${lineText}</div>
-              <div class="practice-line">${lineText}</div>
-              <div class="practice-line">${lineText}</div>
-              <input type="text" class="practice-input" placeholder="Re-type '${word}' here for practice..." />
+              <div class="practice-word-header">${entry}</div>
+              <div class="blank-space-box">
+                <input type="text" class="practice-input" placeholder="Practice line 1 for: ${entry}" />
+                <input type="text" class="practice-input" placeholder="Practice line 2 for: ${entry}" />
+                <input type="text" class="practice-input" placeholder="Practice line 3 for: ${entry}" />
+              </div>
             </div>
           `;
           practiceList.innerHTML += itemHTML;
