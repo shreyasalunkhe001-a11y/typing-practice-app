@@ -38,8 +38,25 @@
     .btn-submit { background: #0066cc; }
     .btn-clean { background: #17a2b8; margin-left: 5px; }
     
+    /* Results View */
     .results-screen { display: none; flex-direction: column; padding: 15px; flex: 1; overflow-y: auto; background: #f8f9fa; }
-    .results-container { display: flex; gap: 15px; margin-top: 15px; }
+    
+    .stats-card { 
+      background: white; 
+      padding: 15px; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+      margin-bottom: 15px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      text-align: center;
+    }
+    .stat-box { background: #f1f5f9; padding: 10px; border-radius: 6px; }
+    .stat-box .num { font-size: 1.4rem; font-weight: bold; color: #1a5b8c; }
+    .stat-box .lbl { font-size: 0.75rem; color: #555; text-transform: uppercase; margin-top: 4px; }
+
+    .results-container { display: flex; gap: 15px; }
     .result-card { flex: 1; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .card-header-user { background: #8062e1; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 1rem; }
     .card-header-orig { background: #318ce7; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 1rem; }
@@ -53,10 +70,20 @@
       white-space: pre-wrap; 
     }
 
-    .correct { background-color: #d1ecf1; color: #0c5460; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
+    /* Word Highlight Badges */
+    .correct { background-color: #d1e7dd; color: #0f5132; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
     .wrong { background-color: #f8d7da; color: #721c24; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
     .case-err { background-color: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
-    
+    .omitted { background-color: #e2d9f3; color: #4a148c; text-decoration: line-through; padding: 2px 4px; border-radius: 3px; display: inline; margin: 0 1px; }
+
+    /* Practice Section */
+    .practice-section { margin-top: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .practice-section h3 { margin-bottom: 12px; color: #1a5b8c; font-size: 1.1rem; border-bottom: 2px solid #eef2f5; padding-bottom: 6px; }
+    .practice-item { margin-bottom: 18px; border-left: 4px solid #318ce7; padding-left: 10px; }
+    .practice-word-header { font-weight: bold; font-size: 1.1rem; color: #000; margin-bottom: 6px; }
+    .practice-line { font-family: 'Times New Roman', Times, serif; color: #555; margin-bottom: 4px; }
+    .practice-input { width: 100%; padding: 6px 10px; font-family: 'Times New Roman', Times, serif; font-size: 0.95rem; border: 1px dashed #aaa; border-radius: 4px; margin-top: 2px; }
+
     @media (max-width: 600px) {
       .main-container, .results-container { flex-direction: column; }
     }
@@ -92,8 +119,27 @@
 
   <div class="results-screen" id="resultsView">
     <h2>Typing Performance Evaluation</h2>
+    
+    <div class="stats-card">
+      <div class="stat-box">
+        <div class="num" id="statTyped">0</div>
+        <div class="lbl">Total Words Typed</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="statCorrect" style="color: #0f5132;">0</div>
+        <div class="lbl">Correct Words</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="statErrors" style="color: #721c24;">0</div>
+        <div class="lbl">Misspelled / Errors</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="statOmitted" style="color: #4a148c;">0</div>
+        <div class="lbl">Omitted Words</div>
+      </div>
+    </div>
+
     <div class="results-container">
-      
       <div class="result-card">
         <div class="card-header-user">Your Typed Paragraph</div>
         <div class="card-body" id="userResultBody"></div>
@@ -103,16 +149,20 @@
         <div class="card-header-orig">Original Paragraph</div>
         <div class="card-body" id="origResultBody"></div>
       </div>
-
     </div>
-    <button class="btn btn-submit" style="margin-top:15px; align-self: flex-start;" onclick="goBack()">Back to Test</button>
+
+    <div class="practice-section" id="practiceSection" style="display: none;">
+      <h3>Detailed Error Breakdown & Practice Layout</h3>
+      <div id="practiceList"></div>
+    </div>
+
+    <button class="btn btn-submit" style="margin-top:15px; margin-bottom: 20px; align-self: flex-start;" onclick="goBack()">Back to Test</button>
   </div>
 
   <script>
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Manual cleaning function for mobile & Safari
     function cleanPassage() {
       let refInput = document.getElementById('reference');
       let text = refInput.value;
@@ -122,7 +172,6 @@
         return;
       }
 
-      // Convert broken single lines into space, keep double enter for real paragraphs
       let cleanedText = text
         .replace(/\r\n/g, '\n')
         .replace(/([^\n])\n([^\n])/g, '$1 $2')
@@ -148,8 +197,44 @@
       }, 1000);
     }
 
-    function renderTokens(text) {
-      return text.split(/(\s+)/);
+    // Longest Common Subsequence (LCS) Sequence Alignment Algorithm
+    function alignTokens(refTokens, userTokens) {
+      const N = refTokens.length;
+      const M = userTokens.length;
+      
+      const dp = Array.from({ length: N + 1 }, () => new Int32Array(M + 1));
+
+      for (let i = 1; i <= N; i++) {
+        for (let j = 1; j <= M; j++) {
+          if (refTokens[i - 1] === userTokens[j - 1]) {
+            dp[i][j] = dp[i - 1][j - 1] + 1;
+          } else {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+          }
+        }
+      }
+
+      let i = N, j = M;
+      const alignment = [];
+
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && refTokens[i - 1] === userTokens[j - 1]) {
+          alignment.unshift({ type: 'match', ref: refTokens[i - 1], user: userTokens[j - 1] });
+          i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+          alignment.unshift({ type: 'extra', ref: null, user: userTokens[j - 1] });
+          j--;
+        } else {
+          alignment.unshift({ type: 'omit', ref: refTokens[i - 1], user: null });
+          i--;
+        }
+      }
+
+      return alignment;
+    }
+
+    function tokenize(text) {
+      return text.match(/\S+|\s+/g) || [];
     }
 
     function finishTest() {
@@ -163,38 +248,103 @@
         return;
       }
 
-      let refTokens = renderTokens(refText);
-      let userTokens = renderTokens(userText);
+      let rawRefTokens = tokenize(refText);
+      let rawUserTokens = tokenize(userText);
+
+      let alignment = alignTokens(rawRefTokens, rawUserTokens);
 
       let userHTML = "";
       let origHTML = "";
 
-      let maxLen = Math.max(refTokens.length, userTokens.length);
+      let totalTyped = 0;
+      let correctCount = 0;
+      let errorCount = 0;
+      let omittedCount = 0;
 
-      for (let i = 0; i < maxLen; i++) {
-        let rToken = refTokens[i] || "";
-        let uToken = userTokens[i] || "";
+      let errorWordsToPractice = new Set();
 
-        if (/^\s+$/.test(rToken) || /^\s+$/.test(uToken)) {
-          origHTML += rToken;
-          userHTML += uToken;
-          continue;
-        }
+      for (let idx = 0; idx < alignment.length; idx++) {
+        let item = alignment[idx];
 
-        if (rToken === uToken && rToken !== "") {
-          origHTML += `<span class="correct">${rToken}</span>`;
-          userHTML += `<span class="correct">${uToken}</span>`;
-        } else if (rToken.toLowerCase() === uToken.toLowerCase() && rToken !== "") {
-          origHTML += `<span class="case-err">${rToken}</span>`;
-          userHTML += `<span class="case-err">${uToken}</span>`;
-        } else {
-          if (rToken) origHTML += `<span class="wrong">${rToken}</span>`;
-          if (uToken) userHTML += `<span class="wrong">${uToken}</span>`;
+        if (item.type === 'match') {
+          if (/^\s+$/.test(item.ref)) {
+            origHTML += item.ref;
+            userHTML += item.user;
+          } else {
+            origHTML += `<span class="correct">${item.ref}</span>`;
+            userHTML += `<span class="correct">${item.user}</span>`;
+            correctCount++;
+            totalTyped++;
+          }
+        } else if (item.type === 'extra') {
+          if (/^\s+$/.test(item.user)) {
+            userHTML += item.user;
+          } else {
+            userHTML += `<span class="wrong">${item.user}</span>`;
+            errorCount++;
+            totalTyped++;
+            errorWordsToPractice.add(item.user.replace(/[^\w]/g, ''));
+          }
+        } else if (item.type === 'omit') {
+          if (/^\s+$/.test(item.ref)) {
+            origHTML += item.ref;
+          } else {
+            // Check if this omission is paired next to an extra insertion (Substitute / Misspelled Word)
+            let nextItem = alignment[idx + 1];
+            if (nextItem && nextItem.type === 'extra' && !/^\s+$/.test(nextItem.user)) {
+              if (item.ref.toLowerCase() === nextItem.user.toLowerCase()) {
+                origHTML += `<span class="case-err">${item.ref}</span>`;
+                userHTML += `<span class="case-err">${nextItem.user}</span>`;
+              } else {
+                origHTML += `<span class="wrong">${item.ref}</span>`;
+                userHTML += `<span class="wrong">${nextItem.user}</span>`;
+              }
+              errorCount++;
+              totalTyped++;
+              errorWordsToPractice.add(item.ref.replace(/[^\w]/g, ''));
+              idx++; // Skip next item since handled
+            } else {
+              origHTML += `<span class="omitted">${item.ref}</span>`;
+              omittedCount++;
+              errorWordsToPractice.add(item.ref.replace(/[^\w]/g, ''));
+            }
+          }
         }
       }
 
+      // Update Statistics
+      document.getElementById('statTyped').textContent = totalTyped;
+      document.getElementById('statCorrect').textContent = correctCount;
+      document.getElementById('statErrors').textContent = errorCount;
+      document.getElementById('statOmitted').textContent = omittedCount;
+
       document.getElementById('userResultBody').innerHTML = userHTML;
       document.getElementById('origResultBody').innerHTML = origHTML;
+
+      // Generate Practice Section
+      let practiceList = document.getElementById('practiceList');
+      practiceList.innerHTML = "";
+
+      let validPracticeWords = Array.from(errorWordsToPractice).filter(w => w.length > 0);
+
+      if (validPracticeWords.length > 0) {
+        document.getElementById('practiceSection').style.display = 'block';
+        validPracticeWords.forEach(word => {
+          let lineText = Array(6).fill(word).join(" ");
+          let itemHTML = `
+            <div class="practice-item">
+              <div class="practice-word-header">${word}</div>
+              <div class="practice-line">${lineText}</div>
+              <div class="practice-line">${lineText}</div>
+              <div class="practice-line">${lineText}</div>
+              <input type="text" class="practice-input" placeholder="Re-type '${word}' here for practice..." />
+            </div>
+          `;
+          practiceList.innerHTML += itemHTML;
+        });
+      } else {
+        document.getElementById('practiceSection').style.display = 'none';
+      }
 
       document.getElementById('practiceView').style.display = 'none';
       document.getElementById('footerBar').style.display = 'none';
