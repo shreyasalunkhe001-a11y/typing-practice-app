@@ -48,13 +48,13 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
       margin-bottom: 15px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 10px;
       text-align: center;
     }
-    .stat-box { background: #f1f5f9; padding: 10px; border-radius: 6px; }
+    .stat-box { background: #f1f5f9; padding: 12px 8px; border-radius: 6px; }
     .stat-box .num { font-size: 1.4rem; font-weight: bold; color: #1a5b8c; }
-    .stat-box .lbl { font-size: 0.75rem; color: #555; text-transform: uppercase; margin-top: 4px; }
+    .stat-box .lbl { font-size: 0.75rem; color: #555; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
 
     .results-container { display: flex; gap: 15px; }
     .result-card { flex: 1; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -322,12 +322,12 @@
 
       flushOmittedGroup();
 
-      // Calculation of Statistics
+      // Calculation of Exact Requested Statistics
       let totalKeystrokes = userText.length;
       let totalActualWords = (refText.trim().match(/\S+/g) || []).length;
       let combinedTotalErrors = misspellErrors + omittedErrors;
 
-      // Stats Update
+      // Stats DOM Update
       document.getElementById('statKeystrokes').textContent = totalKeystrokes;
       document.getElementById('statActualWords').textContent = totalActualWords;
       document.getElementById('statCorrectWords').textContent = correctCount;
@@ -336,7 +336,7 @@
       document.getElementById('userResultBody').innerHTML = userHTML;
       document.getElementById('origResultBody').innerHTML = origHTML;
 
-      // Practice Layout Generation (1 Line Per Error)
+      // Practice Section Generation (1 Line Per Error)
       let practiceList = document.getElementById('practiceList');
       practiceList.innerHTML = "";
 
@@ -347,7 +347,7 @@
             <div class="practice-item">
               <div class="practice-word-header">${entry}</div>
               <div class="blank-space-box">
-                <input type="text" class="practice-input" placeholder="Practice typing '${entry}' here..." />
+                <input type="text" class="practice-input" placeholder="Re-type phrase here for practice..." />
               </div>
             </div>
           `;
