@@ -48,7 +48,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
       margin-bottom: 15px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
       text-align: center;
     }
@@ -79,9 +79,9 @@
     /* Practice Section */
     .practice-section { margin-top: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .practice-section h3 { margin-bottom: 15px; color: #1a5b8c; font-size: 1.1rem; border-bottom: 2px solid #eef2f5; padding-bottom: 6px; }
-    .practice-item { margin-bottom: 20px; border-left: 4px solid #318ce7; padding-left: 12px; }
-    .practice-word-header { font-weight: bold; font-size: 1.1rem; color: #000; margin-bottom: 8px; }
-    .blank-space-box { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .practice-item { margin-bottom: 16px; border-left: 4px solid #318ce7; padding-left: 12px; }
+    .practice-word-header { font-weight: bold; font-size: 1.05rem; color: #000; margin-bottom: 6px; }
+    .blank-space-box { margin-top: 4px; }
     .practice-input { width: 100%; padding: 8px 12px; font-family: 'Times New Roman', Times, serif; font-size: 1rem; border: 1px dashed #a0aec0; border-radius: 4px; background: #fafafa; }
 
     @media (max-width: 600px) {
@@ -122,20 +122,20 @@
     
     <div class="stats-card">
       <div class="stat-box">
-        <div class="num" id="statTyped">0</div>
-        <div class="lbl">Total Words Typed</div>
+        <div class="num" id="statKeystrokes">0</div>
+        <div class="lbl">Total Keystrokes in Passage</div>
       </div>
       <div class="stat-box">
-        <div class="num" id="statCorrect" style="color: #0f5132;">0</div>
-        <div class="lbl">Correct Words</div>
+        <div class="num" id="statActualWords">0</div>
+        <div class="lbl">Total Actual Words in Passage</div>
       </div>
       <div class="stat-box">
-        <div class="num" id="statErrors" style="color: #721c24;">0</div>
-        <div class="lbl">Misspelled / Errors</div>
+        <div class="num" id="statCorrectWords" style="color: #0f5132;">0</div>
+        <div class="lbl">Total Correct Words Typed</div>
       </div>
       <div class="stat-box">
-        <div class="num" id="statOmitted" style="color: #4a148c;">0</div>
-        <div class="lbl">Omitted Words</div>
+        <div class="num" id="statTotalErrors" style="color: #721c24;">0</div>
+        <div class="lbl">Total Errors (Misspellings & Omissions)</div>
       </div>
     </div>
 
@@ -197,7 +197,6 @@
       }, 1000);
     }
 
-    // Longest Common Subsequence (LCS) Sequence Alignment
     function alignTokens(refTokens, userTokens) {
       const N = refTokens.length;
       const M = userTokens.length;
@@ -256,10 +255,9 @@
       let userHTML = "";
       let origHTML = "";
 
-      let totalTyped = 0;
       let correctCount = 0;
-      let errorCount = 0;
-      let omittedCount = 0;
+      let misspellErrors = 0;
+      let omittedErrors = 0;
 
       let practiceItems = [];
       let currentOmittedGroup = [];
@@ -286,7 +284,6 @@
             origHTML += `<span class="correct">${item.ref}</span>`;
             userHTML += `<span class="correct">${item.user}</span>`;
             correctCount++;
-            totalTyped++;
           }
         } else if (item.type === 'extra') {
           flushOmittedGroup();
@@ -294,8 +291,7 @@
             userHTML += item.user;
           } else {
             userHTML += `<span class="wrong">${item.user}</span>`;
-            errorCount++;
-            totalTyped++;
+            misspellErrors++;
             practiceItems.push(item.user);
           }
         } else if (item.type === 'omit') {
@@ -303,7 +299,6 @@
             origHTML += item.ref;
           } else {
             let nextItem = alignment[idx + 1];
-            // Misspelled Word (Substitute)
             if (nextItem && nextItem.type === 'extra' && !/^\s+$/.test(nextItem.user)) {
               flushOmittedGroup();
               if (item.ref.toLowerCase() === nextItem.user.toLowerCase()) {
@@ -313,14 +308,12 @@
                 origHTML += `<span class="wrong">${item.ref}</span>`;
                 userHTML += `<span class="wrong">${nextItem.user}</span>`;
               }
-              errorCount++;
-              totalTyped++;
+              misspellErrors++;
               practiceItems.push(item.ref);
-              idx++; // Skip extra token since handled
+              idx++;
             } else {
-              // Grouped Omission
               origHTML += `<span class="omitted">${item.ref}</span>`;
-              omittedCount++;
+              omittedErrors++;
               currentOmittedGroup.push(item.ref);
             }
           }
@@ -329,16 +322,21 @@
 
       flushOmittedGroup();
 
+      // Calculation of Statistics
+      let totalKeystrokes = userText.length;
+      let totalActualWords = (refText.trim().match(/\S+/g) || []).length;
+      let combinedTotalErrors = misspellErrors + omittedErrors;
+
       // Stats Update
-      document.getElementById('statTyped').textContent = totalTyped;
-      document.getElementById('statCorrect').textContent = correctCount;
-      document.getElementById('statErrors').textContent = errorCount;
-      document.getElementById('statOmitted').textContent = omittedCount;
+      document.getElementById('statKeystrokes').textContent = totalKeystrokes;
+      document.getElementById('statActualWords').textContent = totalActualWords;
+      document.getElementById('statCorrectWords').textContent = correctCount;
+      document.getElementById('statTotalErrors').textContent = combinedTotalErrors;
 
       document.getElementById('userResultBody').innerHTML = userHTML;
       document.getElementById('origResultBody').innerHTML = origHTML;
 
-      // Render Practice Section
+      // Practice Layout Generation (1 Line Per Error)
       let practiceList = document.getElementById('practiceList');
       practiceList.innerHTML = "";
 
@@ -349,9 +347,7 @@
             <div class="practice-item">
               <div class="practice-word-header">${entry}</div>
               <div class="blank-space-box">
-                <input type="text" class="practice-input" placeholder="Practice line 1 for: ${entry}" />
-                <input type="text" class="practice-input" placeholder="Practice line 2 for: ${entry}" />
-                <input type="text" class="practice-input" placeholder="Practice line 3 for: ${entry}" />
+                <input type="text" class="practice-input" placeholder="Practice typing '${entry}' here..." />
               </div>
             </div>
           `;
