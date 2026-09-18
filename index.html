@@ -105,7 +105,7 @@
       <textarea id="reference" placeholder="Paste passage here, then tap 'Fix PDF Breaks' above..."></textarea>
     </div>
     <div class="box">
-      <textarea id="workspace" placeholder="Start typing continuous text here..."></textarea>
+      <textarea id="workspace" placeholder="Start typing continuous text here (Backspace disabled)..."></textarea>
     </div>
   </div>
 
@@ -162,6 +162,13 @@
   <script>
     let totalSeconds = 600;
     let timerInterval = null;
+
+    // Disable Backspace & Delete Key in Workspace Area
+    document.getElementById('workspace').addEventListener('keydown', function(event) {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault();
+      }
+    });
 
     function cleanPassage() {
       let refInput = document.getElementById('reference');
@@ -322,12 +329,10 @@
 
       flushOmittedGroup();
 
-      // Calculation of Exact Requested Statistics
       let totalKeystrokes = userText.length;
       let totalActualWords = (refText.trim().match(/\S+/g) || []).length;
       let combinedTotalErrors = misspellErrors + omittedErrors;
 
-      // Stats DOM Update
       document.getElementById('statKeystrokes').textContent = totalKeystrokes;
       document.getElementById('statActualWords').textContent = totalActualWords;
       document.getElementById('statCorrectWords').textContent = correctCount;
@@ -336,7 +341,6 @@
       document.getElementById('userResultBody').innerHTML = userHTML;
       document.getElementById('origResultBody').innerHTML = origHTML;
 
-      // Practice Section Generation (1 Line Per Error)
       let practiceList = document.getElementById('practiceList');
       practiceList.innerHTML = "";
 
