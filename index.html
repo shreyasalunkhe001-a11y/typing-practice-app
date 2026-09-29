@@ -102,10 +102,10 @@
 
   <div class="main-container" id="practiceView">
     <div class="box">
-      <textarea id="reference" placeholder="Paste passage here, then tap 'Fix PDF Breaks' above..."></textarea>
+      <textarea id="reference" placeholder="Paste passage here, then tap 'Fix PDF Breaks' above..." spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
     </div>
     <div class="box">
-      <textarea id="workspace" placeholder="Start typing continuous text here (Backspace disabled)..."></textarea>
+      <textarea id="workspace" placeholder="Start typing continuous text here..." spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
     </div>
   </div>
 
@@ -163,9 +163,13 @@
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Disable Backspace & Delete Key in Workspace Area
+    // Disable Backspace, Delete, Ctrl+Z, and Cmd+Z in Workspace Area
     document.getElementById('workspace').addEventListener('keydown', function(event) {
-      if (event.key === 'Backspace' || event.key === 'Delete') {
+      const isZKey = event.key === 'z' || event.key === 'Z' || event.keyCode === 90;
+      const isUndo = (event.ctrlKey || event.metaKey) && isZKey;
+      const isBackspaceOrDelete = event.key === 'Backspace' || event.key === 'Delete';
+
+      if (isBackspaceOrDelete || isUndo) {
         event.preventDefault();
       }
     });
@@ -351,7 +355,7 @@
             <div class="practice-item">
               <div class="practice-word-header">${entry}</div>
               <div class="blank-space-box">
-                <input type="text" class="practice-input" placeholder="Re-type phrase here for practice..." />
+                <input type="text" class="practice-input" placeholder="Re-type phrase here for practice..." spellcheck="false" autocomplete="off" />
               </div>
             </div>
           `;
