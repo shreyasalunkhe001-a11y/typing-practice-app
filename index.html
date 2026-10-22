@@ -163,13 +163,14 @@
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Disable Backspace, Delete, Ctrl+Z, and Cmd+Z in Workspace Area
+    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, and Arrow Keys in Workspace Area
     document.getElementById('workspace').addEventListener('keydown', function(event) {
       const isZKey = event.key === 'z' || event.key === 'Z' || event.keyCode === 90;
       const isUndo = (event.ctrlKey || event.metaKey) && isZKey;
       const isBackspaceOrDelete = event.key === 'Backspace' || event.key === 'Delete';
+      const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
 
-      if (isBackspaceOrDelete || isUndo) {
+      if (isBackspaceOrDelete || isUndo || isArrowKey) {
         event.preventDefault();
       }
     });
