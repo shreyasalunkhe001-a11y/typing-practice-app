@@ -31,6 +31,14 @@
       word-wrap: break-word;
       overflow-y: auto;
     }
+
+    /* Disable text selection/highlighting in workspace */
+    #workspace {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
     
     .footer-bar { background: #d9e2ec; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
     .btn { padding: 6px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; }
@@ -163,17 +171,41 @@
     let totalSeconds = 600;
     let timerInterval = null;
 
-    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, and Arrow Keys in Workspace Area
-    document.getElementById('workspace').addEventListener('keydown', function(event) {
+    const workspaceEl = document.getElementById('workspace');
+
+    // Prevent text selection changes (selection drag/highlight)
+    document.addEventListener('selectionchange', function() {
+      if (document.activeElement === workspaceEl && workspaceEl.selectionStart !== workspaceEl.selectionEnd) {
+        workspaceEl.selectionStart = workspaceEl.selectionEnd;
+      }
+    });
+
+    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, Arrow Keys, Ctrl+A, Cmd+A, and editing over selected text
+    workspaceEl.addEventListener('keydown', function(event) {
       const isZKey = event.key === 'z' || event.key === 'Z' || event.keyCode === 90;
+      const isAKey = event.key === 'a' || event.key === 'A' || event.keyCode === 65;
       const isUndo = (event.ctrlKey || event.metaKey) && isZKey;
+      const isSelectAll = (event.ctrlKey || event.metaKey) && isAKey;
       const isBackspaceOrDelete = event.key === 'Backspace' || event.key === 'Delete';
       const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
 
-      if (isBackspaceOrDelete || isUndo || isArrowKey) {
+      // Block backspace/delete, undo, arrow keys, or select all
+      if (isBackspaceOrDelete || isUndo || isArrowKey || isSelectAll) {
         event.preventDefault();
+        return;
+      }
+
+      // Block text replacement if text selection somehow exists
+      if (workspaceEl.selectionStart !== workspaceEl.selectionEnd) {
+        event.preventDefault();
+        workspaceEl.selectionStart = workspaceEl.selectionEnd;
       }
     });
+
+    // Disable Right-Click Context Menu, Drag & Drop in Workspace
+    workspaceEl.addEventListener('contextmenu', e => e.preventDefault());
+    workspaceEl.addEventListener('dragstart', e => e.preventDefault());
+    workspaceEl.addEventListener('drop', e => e.preventDefault());
 
     function cleanPassage() {
       let refInput = document.getElementById('reference');
