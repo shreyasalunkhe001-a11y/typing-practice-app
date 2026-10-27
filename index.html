@@ -173,30 +173,28 @@
 
     const workspaceEl = document.getElementById('workspace');
 
-    // Force cursor to always stay at the end of the text (prevents clicking or moving back)
-    function lockCursorToEnd() {
+    // Strict Cursor Locking Function
+    function keepCursorAtEnd() {
       const len = workspaceEl.value.length;
       workspaceEl.setSelectionRange(len, len);
     }
 
-    workspaceEl.addEventListener('mousedown', function(e) {
-      e.preventDefault();
-      lockCursorToEnd();
+    // Intercept any input action (typing, deleting, inserting elsewhere)
+    workspaceEl.addEventListener('beforeinput', function(e) {
+      // Block any deletion attempt (Backspace / Delete)
+      if (e.inputType.includes('delete')) {
+        e.preventDefault();
+        keepCursorAtEnd();
+        return;
+      }
+      // If cursor/selection is somehow moved before the end, block insertion
+      if (workspaceEl.selectionStart < workspaceEl.value.length || workspaceEl.selectionEnd < workspaceEl.value.length) {
+        e.preventDefault();
+        keepCursorAtEnd();
+      }
     });
 
-    workspaceEl.addEventListener('click', function(e) {
-      lockCursorToEnd();
-    });
-
-    workspaceEl.addEventListener('focus', function(e) {
-      lockCursorToEnd();
-    });
-
-    workspaceEl.addEventListener('selectionchange', function() {
-      lockCursorToEnd();
-    });
-
-    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, Arrow Keys, Ctrl+A, Cmd+A
+    // Block keyboard shortcuts like Backspace, Delete, Arrow keys, Ctrl+Z, Ctrl+A
     workspaceEl.addEventListener('keydown', function(event) {
       const isZKey = event.key === 'z' || event.key === 'Z' || event.keyCode === 90;
       const isAKey = event.key === 'a' || event.key === 'A' || event.keyCode === 65;
@@ -207,15 +205,27 @@
 
       if (isBackspaceOrDelete || isUndo || isArrowKey || isSelectAll) {
         event.preventDefault();
-        lockCursorToEnd();
+        keepCursorAtEnd();
         return;
       }
-      
-      lockCursorToEnd();
     });
 
-    workspaceEl.addEventListener('input', function() {
-      lockCursorToEnd();
+    // Force cursor to end on click, mousedown, focus or selection changes
+    workspaceEl.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      keepCursorAtEnd();
+    });
+
+    workspaceEl.addEventListener('click', function() {
+      keepCursorAtEnd();
+    });
+
+    workspaceEl.addEventListener('focus', function() {
+      keepCursorAtEnd();
+    });
+
+    workspaceEl.addEventListener('select', function() {
+      keepCursorAtEnd();
     });
 
     // Disable Right-Click Context Menu, Drag & Drop in Workspace
