@@ -173,14 +173,30 @@
 
     const workspaceEl = document.getElementById('workspace');
 
-    // Prevent text selection changes (selection drag/highlight)
-    document.addEventListener('selectionchange', function() {
-      if (document.activeElement === workspaceEl && workspaceEl.selectionStart !== workspaceEl.selectionEnd) {
-        workspaceEl.selectionStart = workspaceEl.selectionEnd;
-      }
+    // Force cursor to always stay at the end of the text (prevents clicking or moving back)
+    function lockCursorToEnd() {
+      const len = workspaceEl.value.length;
+      workspaceEl.setSelectionRange(len, len);
+    }
+
+    workspaceEl.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      lockCursorToEnd();
     });
 
-    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, Arrow Keys, Ctrl+A, Cmd+A, and editing over selected text
+    workspaceEl.addEventListener('click', function(e) {
+      lockCursorToEnd();
+    });
+
+    workspaceEl.addEventListener('focus', function(e) {
+      lockCursorToEnd();
+    });
+
+    workspaceEl.addEventListener('selectionchange', function() {
+      lockCursorToEnd();
+    });
+
+    // Disable Backspace, Delete, Ctrl+Z, Cmd+Z, Arrow Keys, Ctrl+A, Cmd+A
     workspaceEl.addEventListener('keydown', function(event) {
       const isZKey = event.key === 'z' || event.key === 'Z' || event.keyCode === 90;
       const isAKey = event.key === 'a' || event.key === 'A' || event.keyCode === 65;
@@ -189,17 +205,17 @@
       const isBackspaceOrDelete = event.key === 'Backspace' || event.key === 'Delete';
       const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
 
-      // Block backspace/delete, undo, arrow keys, or select all
       if (isBackspaceOrDelete || isUndo || isArrowKey || isSelectAll) {
         event.preventDefault();
+        lockCursorToEnd();
         return;
       }
+      
+      lockCursorToEnd();
+    });
 
-      // Block text replacement if text selection somehow exists
-      if (workspaceEl.selectionStart !== workspaceEl.selectionEnd) {
-        event.preventDefault();
-        workspaceEl.selectionStart = workspaceEl.selectionEnd;
-      }
+    workspaceEl.addEventListener('input', function() {
+      lockCursorToEnd();
     });
 
     // Disable Right-Click Context Menu, Drag & Drop in Workspace
