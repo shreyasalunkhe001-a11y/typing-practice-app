@@ -31,14 +31,6 @@
       word-wrap: break-word;
       overflow-y: auto;
     }
-
-    /* Disable text selection/highlighting in workspace */
-    #workspace {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
     
     .footer-bar { background: #d9e2ec; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
     .btn { padding: 6px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; }
@@ -139,7 +131,7 @@
       </div>
       <div class="stat-box">
         <div class="num" id="statCorrectWords" style="color: #0f5132;">0</div>
-        <div class="lbl">Total Correct Words Typed</div>
+        <div class="lbl">Total Correct Words Typed / Correct</div>
       </div>
       <div class="stat-box">
         <div class="num" id="statTotalErrors" style="color: #721c24;">0</div>
@@ -173,24 +165,22 @@
 
     const workspaceEl = document.getElementById('workspace');
 
-    // Strict Cursor Locking Function
-    function keepCursorAtEnd() {
-      const len = workspaceEl.value.length;
-      workspaceEl.setSelectionRange(len, len);
-    }
-
-    // Intercept any input action (typing, deleting, inserting elsewhere)
+    // Forward-only typing control: Allow typing at start, but block going back & editing once ahead
     workspaceEl.addEventListener('beforeinput', function(e) {
-      // Block any deletion attempt (Backspace / Delete)
+      // 1. Block any deletion (Backspace / Delete)
       if (e.inputType.includes('delete')) {
         e.preventDefault();
-        keepCursorAtEnd();
         return;
       }
-      // If cursor/selection is somehow moved before the end, block insertion
-      if (workspaceEl.selectionStart < workspaceEl.value.length || workspaceEl.selectionEnd < workspaceEl.value.length) {
-        e.preventDefault();
-        keepCursorAtEnd();
+
+      // 2. If text is already present, ensure the user is typing strictly at the very end
+      const currentLength = workspaceEl.value.length;
+      if (currentLength > 0) {
+        if (workspaceEl.selectionStart < currentLength || workspaceEl.selectionEnd < currentLength) {
+          e.preventDefault();
+          // Automatically snap cursor back to the end so they can continue forward
+          workspaceEl.setSelectionRange(currentLength, currentLength);
+        }
       }
     });
 
@@ -205,27 +195,19 @@
 
       if (isBackspaceOrDelete || isUndo || isArrowKey || isSelectAll) {
         event.preventDefault();
-        keepCursorAtEnd();
         return;
       }
     });
 
-    // Force cursor to end on click, mousedown, focus or selection changes
+    // Prevent clicking backward into typed text once user has typed something
     workspaceEl.addEventListener('mousedown', function(e) {
-      e.preventDefault();
-      keepCursorAtEnd();
-    });
-
-    workspaceEl.addEventListener('click', function() {
-      keepCursorAtEnd();
-    });
-
-    workspaceEl.addEventListener('focus', function() {
-      keepCursorAtEnd();
-    });
-
-    workspaceEl.addEventListener('select', function() {
-      keepCursorAtEnd();
+      const currentLength = workspaceEl.value.length;
+      if (currentLength > 0) {
+        // If there is text, force cursor to jump to the end on click
+        setTimeout(() => {
+          workspaceEl.setSelectionRange(currentLength, currentLength);
+        }, 0);
+      }
     });
 
     // Disable Right-Click Context Menu, Drag & Drop in Workspace
